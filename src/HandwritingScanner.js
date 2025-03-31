@@ -121,7 +121,7 @@ const HandwritingScanner = () => {
 
         try {
             // Replace with your API endpoint
-            const response = await fetch("https://13.203.76.160/extract-text", {
+            const response = await fetch("http://13.203.76.160/extract-text", {
                 method: "POST",
                 body: formData,
             });
