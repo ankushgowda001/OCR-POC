@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { createWorker } from "tesseract.js";
 import { Upload, Scan } from "lucide-react";
 import "./styles.css";
@@ -12,6 +12,8 @@ const HandwritingScanner = () => {
     const [videoStream, setVideoStream] = useState(null);
     const [videoElement, setVideoElement] = useState(null);
     const [isFrontCamera, setIsFrontCamera] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Handle file upload
     const handleFileUpload = (event) => {
@@ -31,20 +33,20 @@ const HandwritingScanner = () => {
             let constraints = {
                 video: { facingMode: "environment" } // Back camera
             };
-    
+
             let stream = await navigator.mediaDevices.getUserMedia(constraints);
             setIsFrontCamera(false); // Set state to back camera
             setVideoStream(stream);
             setVideoElement(createVideoElement(stream));
         } catch (error) {
             console.warn("Back camera not available, switching to front camera");
-    
+
             try {
                 // If back camera is not available, fallback to front camera
                 let constraints = {
                     video: { facingMode: "user" } // Front camera
                 };
-    
+
                 let stream = await navigator.mediaDevices.getUserMedia(constraints);
                 setIsFrontCamera(true); // Set state to front camera
                 setVideoStream(stream);
@@ -55,7 +57,7 @@ const HandwritingScanner = () => {
             }
         }
     };
-    
+
     // Helper function to create a video element
     const createVideoElement = (stream) => {
         const video = document.createElement("video");
@@ -63,7 +65,7 @@ const HandwritingScanner = () => {
         video.play();
         return video;
     };
-    
+
     const captureImage = () => {
         if (!videoElement) return;
 
@@ -119,7 +121,7 @@ const HandwritingScanner = () => {
 
         try {
             // Replace with your API endpoint
-            const response = await fetch("http://13.203.76.160/extract-text", {
+            const response = await fetch("https://13.203.76.160/extract-text", {
                 method: "POST",
                 body: formData,
             });
@@ -135,6 +137,12 @@ const HandwritingScanner = () => {
         }
 
         setIsProcessing(false);
+    };
+
+    const handleUploadClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
     };
 
     return (
@@ -155,7 +163,7 @@ const HandwritingScanner = () => {
                 <h2><span className="hand">Hand</span>Scan</h2>
 
                 {/* Upload Document */}
-                <div className="sidebar-option"  onClick={() => document.getElementById("fileInput").click()}>
+                <div className="sidebar-option" onClick={handleUploadClick}>
                     <Upload size={32} color="#333" />
                     <p>Upload Document</p>
                 </div>
@@ -200,12 +208,17 @@ const HandwritingScanner = () => {
                     {/* Image Upload Box */}
                     <label htmlFor="fileInput" className="upload-box">
                         {image ? (
-                            <img src={image} alt="Uploaded Preview" className="uploaded-image" />
+                            <img
+                                src={image}
+                                alt="Uploaded Preview"
+                                className="uploaded-image"
+                                onClick={() => setIsModalOpen(true)}
+                            />
                         ) : (
                             <p>Upload Image</p>
                         )}
                     </label>
-                    <input type="file" accept="image/*" id="fileInput" onChange={handleFileUpload} hidden />
+                    <input type="file" ref={fileInputRef} accept="image/*" id="fileInput" onChange={handleFileUpload} hidden />
 
                     {/* Convert to Text Button */}
                     <button
@@ -230,6 +243,15 @@ const HandwritingScanner = () => {
                 <h3>Extracted Text:</h3>
                 <pre>{extractedText || "No text extracted"}</pre>
             </div>}
+
+            {/* {isModalOpen && image && (
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <img src={image} alt="Full Size Preview" className="modal-image" />
+                        <button className="close-button" onClick={() => setIsModalOpen(false)}>X</button>
+                    </div>
+                </div>
+            )} */}
         </div>
     );
 };
